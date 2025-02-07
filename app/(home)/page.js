@@ -52,7 +52,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f0f4f8] to-[#e0e7ff] text-gray-800 flex items-center justify-center p-4 font-mono">
-      <div className="bg-white shadow-2xl rounded-2xl w-full max-w-md p-8 space-y-6 border border-gray-100">
+      <div className="bg-white shadow-2xl rounded-2xl w-full max-w-md p-8 space-y-6 border-y-4 border-x border-indigo-500">
         <div className="text-center">
           {/* <h2 className="text-2xl font-bold text-indigo-600 mb-2">Link Generator</h2> */}
           <p className="text-gray-500">Enter Solana wallet address to generate a sharable link</p>
