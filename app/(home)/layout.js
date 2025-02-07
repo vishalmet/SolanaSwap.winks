@@ -14,14 +14,14 @@ const geistMono = Geist_Mono({
 // Using Next.js's generateMetadata to have more control over meta tags
 export async function generateMetadata() {
   return {
-    title: "MetisDynamic.winks",
-    description: "Donate crypto on X.",
+    title: "SolanaSwap.winks",
+    description: "Swap crypto on X.",
     // Twitter specific meta tags
     other: {
       'twitter:card': 'player',
       'twitter:site': '@UltimateDigits',
-      'twitter:title': 'Metis Wink by winks.fun',
-      'twitter:description': 'Donate crypto on X.',
+      'twitter:title': 'Solana Swap Wink by winks.fun',
+      'twitter:description': 'Swap crypto on X.',
       'twitter:player': 'https://donate-dynamic.vercel.app',
       'twitter:player:width': '360',
       'twitter:player:height': '560',
