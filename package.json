@@ -20,11 +20,13 @@
     "next": "15.1.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "shadcn-ui": "^0.9.4",
     "viem": "^2.22.7",
     "wagmi": "^2.14.7"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@types/react": "^18.3.18",
     "eslint": "^9",
     "eslint-config-next": "15.1.4",
     "postcss": "^8",
