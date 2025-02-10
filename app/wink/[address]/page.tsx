@@ -28,26 +28,49 @@ const SolanaSwapUI: React.FC = () => {
   const [isSwapping, setIsSwapping] = useState<boolean>(false);
   const [isCopied, setIsCopied] = useState<boolean>(false);
   const [showTooltip, setShowTooltip] = useState<string>('');
+  const [isFetchingQuote, setIsFetchingQuote] = useState<boolean>(false); // State for preloader
 
   const handleSwapTokens = () => {
     const tempToken = { ...fromToken };
     setFromToken(toToken);
     setToToken(tempToken);
-
-    if (fromAmount) {
-      setToAmount((parseFloat(fromAmount) * 1.02).toFixed(2));
-    }
   };
 
   const handleFromAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setFromAmount(value);
-    if (value && !isNaN(parseFloat(value))) {
-      setToAmount((parseFloat(value) * 1.02).toFixed(2));
-    } else {
-      setToAmount('');
-    }
   };
+
+  useEffect(() => {
+    const fetchJupiterQuote = async () => {
+      if (!fromAmount) {
+        setToAmount(''); // Clear toAmount if fromAmount is empty
+        return;
+      }
+
+      setIsFetchingQuote(true); // Start preloader
+      try {
+        const response = await fetch(
+          `https://api.jup.ag/swap/v1/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=${parseFloat(fromAmount) * 100000000}&slippageBps=50&restrictIntermediateTokens=true`
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("API Response:", data);
+        setToAmount(data.outAmount);
+      } catch (error) {
+        console.error("Error fetching Jupiter quote:", error);
+        setToAmount('Error fetching quote'); 
+      } finally {
+        setIsFetchingQuote(false); 
+      }
+    };
+
+    fetchJupiterQuote();
+  }, [fromAmount]);
 
   const handleSwap = () => {
     setIsSwapping(true);
@@ -201,7 +224,7 @@ const SolanaSwapUI: React.FC = () => {
               <input
                 type="number"
                 className="w-full bg-transparent text-2xl focus:outline-none"
-                placeholder="0"
+                placeholder={isFetchingQuote ? "..." : "0"} // Preloader text
                 value={toAmount}
                 readOnly
               />
