@@ -9,6 +9,24 @@ interface Token {
   icon: string;
 }
 
+interface QuoteResponse {
+  inputMint: string;
+  inAmount: string;
+  outputMint: string;
+  outAmount: string;
+  otherAmountThreshold: string;
+  swapMode: string;
+  slippageBps: number;
+  platformFee: {
+    amount: string;
+    feeBps: number;
+  };
+  priceImpactPct: string;
+  routePlan: Array<any>;
+  contextSlot: number;
+  timeTaken: number;
+}
+
 const SolanaSwapUI: React.FC = () => {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [fromToken, setFromToken] = useState<Token>({
@@ -28,7 +46,8 @@ const SolanaSwapUI: React.FC = () => {
   const [isSwapping, setIsSwapping] = useState<boolean>(false);
   const [isCopied, setIsCopied] = useState<boolean>(false);
   const [showTooltip, setShowTooltip] = useState<string>('');
-  const [isFetchingQuote, setIsFetchingQuote] = useState<boolean>(false); // State for preloader
+  const [isFetchingQuote, setIsFetchingQuote] = useState<boolean>(false); 
+  const [quoteResponse, setQuoteResponse] = useState<QuoteResponse | null>(null);
 
   const handleSwapTokens = () => {
     const tempToken = { ...fromToken };
@@ -59,11 +78,13 @@ const SolanaSwapUI: React.FC = () => {
         }
 
         const data = await response.json();
-        console.log("API Response:", data);
+        console.log("Quote Response:", data);
         setToAmount(data.outAmount);
+        setQuoteResponse(data);
       } catch (error) {
         console.error("Error fetching Jupiter quote:", error);
         setToAmount('Error fetching quote'); 
+        setQuoteResponse(null);
       } finally {
         setIsFetchingQuote(false); 
       }
@@ -72,12 +93,54 @@ const SolanaSwapUI: React.FC = () => {
     fetchJupiterQuote();
   }, [fromAmount]);
 
-  const handleSwap = () => {
+  const handleSwap = async () => {
+    if (!quoteResponse || !walletAddress) return;
+
     setIsSwapping(true);
-    setTimeout(() => {
+    try {
+      const swapResponse = await fetch('https://api.jup.ag/swap/v1/swap', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          quoteResponse,
+          userPublicKey: walletAddress,
+          dynamicComputeUnitLimit: true,
+          dynamicSlippage: true,
+            prioritizationFeeLamports: {
+              priorityLevelWithMaxLamports: {
+                maxLamports: 1000000,
+                priorityLevel: "veryHigh"
+              }
+            }
+        })
+      });
+
+      if (!swapResponse.ok) {
+        throw new Error(`HTTP error! status: ${swapResponse.status}`);
+      }
+
+      const swapResult = await swapResponse.json();
+      console.log("Swap Response:", swapResult);
+      // Here you would typically handle the swap result, e.g., show a success message
+    } catch (error) {
+      console.error("Error during swap:", error);
+      // Handle the error, e.g., show an error message to the user
+    } finally {
       setIsSwapping(false);
-    }, 2000);
+    }
   };
+
+
+  // const handleSwap = () => {
+  //   setIsSwapping(true);
+  //   setTimeout(() => {
+  //     setIsSwapping(false);
+  //   }, 2000);
+  // };
+
+  const toAmountFormat = parseFloat(toAmount) / 100000;
 
   const copyToClipboard = async () => {
     if (walletAddress) {
@@ -88,7 +151,7 @@ const SolanaSwapUI: React.FC = () => {
   };
 
   const openInExplorer = () => {
-    if (walletAddress) {
+    if (walletAddress) {  
       window.open(`https://explorer.solana.com/address/${walletAddress}`, '_blank');
     }
   };
@@ -224,8 +287,8 @@ const SolanaSwapUI: React.FC = () => {
               <input
                 type="number"
                 className="w-full bg-transparent text-2xl focus:outline-none"
-                placeholder={isFetchingQuote ? "..." : "0"} // Preloader text
-                value={toAmount}
+                placeholder={isFetchingQuote ? "..." : "0"}
+                value={toAmountFormat}
                 readOnly
               />
               <div className="flex items-center bg-indigo-100 rounded-full px-3 py-1">
