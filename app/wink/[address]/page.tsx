@@ -76,6 +76,8 @@ const SolanaSwapUI: React.FC = () => {
     null
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [signatureLink, setSignatureLink] = useState<string | null>(null);
 
   const handleSwapTokens = () => {
     const tempToken = { ...fromToken };
@@ -135,6 +137,9 @@ const SolanaSwapUI: React.FC = () => {
     setIsSwapping(true);
     setIsSigning(true);
     setErrorMessage(null);
+    setSuccessMessage(null); // Clear any previous success message
+    setSignatureLink(null);
+
     try {
       const swapResponse = await fetch("https://api.jup.ag/swap/v1/swap", {
         method: "POST",
@@ -155,7 +160,6 @@ const SolanaSwapUI: React.FC = () => {
           // }
         }),
       });
-
       if (!swapResponse.ok) {
         const errorData = await swapResponse.json();
         throw new Error(
@@ -229,6 +233,8 @@ const SolanaSwapUI: React.FC = () => {
 
             console.log(`Transaction completed: ${signature}`);
             setErrorMessage(null);
+            setSuccessMessage("Transaction completed!");
+            setSignatureLink(`https://solscan.io/tx/${signature}`);
           } catch (signingError) {
             console.error("Signing error", signingError);
             setErrorMessage(
@@ -442,26 +448,48 @@ const SolanaSwapUI: React.FC = () => {
                   clipRule="evenodd"
                 />
               </svg>
-              <span className="text-sm font-medium">{errorMessage}</span>
+              <span className="text-sm">{errorMessage}</span>
             </div>
           )}
 
-          <button
-            className={`w-full py-3 rounded-lg text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
-              !fromAmount || !walletAddress
-                ? "bg-indigo-300 cursor-not-allowed"
-                : "bg-indigo-600 hover:bg-indigo-700 active:scale-95"
-            }`}
-            onClick={handleSwap}
-            disabled={!fromAmount || isSwapping || !walletAddress || isSigning}
-          >
-            {buttonText}
-          </button>
+          {successMessage && signatureLink && (
+            <div className="flex items-center justify-center gap-2 p-3 mt-2 text-green-600 bg-green-100 rounded-lg">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-5 h-5"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <span className="text-sm">{successMessage}</span>
+              <a
+                href={signatureLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ml-1 text-blue-600 hover:underline"
+              >
+                View on Solscan
+              </a>
+            </div>
+          )}
         </div>
 
-        <p className="text-center text-xs text-gray-500">
-          Powered by winks.fun
-        </p>
+        <button
+          onClick={handleSwap}
+          className={`w-full py-3 rounded-lg text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+            !fromAmount || !walletAddress
+              ? "bg-indigo-300 cursor-not-allowed"
+              : "bg-indigo-600 hover:bg-indigo-700 active:scale-95"
+          }`}
+          disabled={!fromAmount || isSwapping || !walletAddress || isSigning}
+        >
+          {buttonText}
+        </button>
       </div>
     </div>
   );
