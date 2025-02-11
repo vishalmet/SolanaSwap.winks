@@ -78,6 +78,9 @@ const SolanaSwapUI: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [signatureLink, setSignatureLink] = useState<string | null>(null);
+  const [tokenPrices, setTokenPrices] = useState<{
+    [key: string]: number;
+  } | null>(null);
 
   const handleSwapTokens = () => {
     const tempToken = { ...fromToken };
@@ -128,12 +131,41 @@ const SolanaSwapUI: React.FC = () => {
     fetchJupiterQuote();
   }, [fromAmount]);
 
+  useEffect(() => {
+    const fetchTokenPrices = async () => {
+      try {
+        const priceResponse = await fetch(
+          "https://api.jup.ag/price/v2?ids=JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN,So11111111111111111111111111111111111111112,EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+        );
+        if (!priceResponse.ok) {
+          throw new Error(`HTTP error! status: ${priceResponse.status}`);
+        }
+        const priceData = await priceResponse.json();
+        console.log("Price Data:", priceData);
+
+        // Extract prices and store them in the state
+        const prices: { [key: string]: number } = {};
+        if (priceData.data) {
+          Object.values(priceData.data).forEach((token: any) => {
+            prices[token.id] = parseFloat(token.price);
+          });
+          setTokenPrices(prices);
+        } else {
+          console.error("Price data structure is unexpected:", priceData);
+        }
+      } catch (error) {
+        console.error("Error fetching token prices:", error);
+      }
+    };
+
+    fetchTokenPrices();
+  }, []);
+
   const handleSwap = async () => {
     if (!quoteResponse || !walletAddress) {
       setErrorMessage("Quote response or wallet address missing.");
       return;
     }
-
     setIsSwapping(true);
     setIsSigning(true);
     setErrorMessage(null);
@@ -402,6 +434,14 @@ const SolanaSwapUI: React.FC = () => {
                 <span>{fromToken.symbol}</span>
               </div>
             </div>
+            {tokenPrices && tokenPrices["So11111111111111111111111111111111111111112"] && (
+              <div className="text-xs text-gray-500 mt-1">
+                Price: $
+                {
+                  tokenPrices["So11111111111111111111111111111111111111112"]
+                }
+              </div>
+            )}
           </div>
 
           <div className="flex justify-center">
@@ -433,6 +473,15 @@ const SolanaSwapUI: React.FC = () => {
                 <span>{toToken.symbol}</span>
               </div>
             </div>
+            {tokenPrices &&
+              tokenPrices["EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"] && (
+                <div className="text-xs text-gray-500 mt-1">
+                  Price: $
+                  {
+                    tokenPrices["EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"]
+                  }
+                </div>
+              )}
           </div>
           {errorMessage && (
             <div className="flex items-center justify-center gap-2 p-3 mt-2 text-red-600 bg-red-100 rounded-lg">
@@ -444,15 +493,15 @@ const SolanaSwapUI: React.FC = () => {
               >
                 <path
                   fillRule="evenodd"
-                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
                   clipRule="evenodd"
                 />
               </svg>
-              <span className="text-sm">{errorMessage}</span>
+              {errorMessage}
             </div>
           )}
 
-          {successMessage && signatureLink && (
+          {successMessage && (
             <div className="flex items-center justify-center gap-2 p-3 mt-2 text-green-600 bg-green-100 rounded-lg">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -462,34 +511,32 @@ const SolanaSwapUI: React.FC = () => {
               >
                 <path
                   fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4a1 1 0 00-1.414-1.414z"
                   clipRule="evenodd"
                 />
               </svg>
-              <span className="text-sm">{successMessage}</span>
-              <a
-                href={signatureLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ml-1 text-blue-600 hover:underline"
-              >
-                View on Solscan
-              </a>
+              {successMessage}
+              {signatureLink && (
+                <a
+                  href={signatureLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline"
+                >
+                  View on Solscan
+                </a>
+              )}
             </div>
           )}
-        </div>
 
-        <button
-          onClick={handleSwap}
-          className={`w-full py-3 rounded-lg text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
-            !fromAmount || !walletAddress
-              ? "bg-indigo-300 cursor-not-allowed"
-              : "bg-indigo-600 hover:bg-indigo-700 active:scale-95"
-          }`}
-          disabled={!fromAmount || isSwapping || !walletAddress || isSigning}
-        >
-          {buttonText}
-        </button>
+          <button
+            onClick={walletAddress ? handleSwap : connectWallet}
+            className="w-full px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:bg-indigo-300 disabled:cursor-not-allowed"
+            disabled={isSwapping || isSigning || !fromAmount}
+          >
+            {buttonText}
+          </button>
+        </div>
       </div>
     </div>
   );
