@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { RefreshCw, Wallet, Copy, ExternalLink } from 'lucide-react';
+import { VersionedTransaction, PublicKey, clusterApiUrl, Connection } from '@solana/web3.js';
 
 interface Token {
   symbol: string;
@@ -27,6 +28,20 @@ interface QuoteResponse {
   timeTaken: number;
 }
 
+interface SolanaWindow extends Window {
+    solana?: {
+        connect: () => Promise<{ publicKey: PublicKey }>;
+        disconnect: () => Promise<void>;
+        isPhantom: boolean;
+        signTransaction: (transaction: VersionedTransaction) => Promise<VersionedTransaction>;
+        signAllTransactions: (transactions: VersionedTransaction[]) => Promise<VersionedTransaction[]>;
+        on: (event: string, callback: (args: any) => void) => void;
+        removeListener: (event: string, callback: (args: any) => void) => void;
+    };
+}
+
+declare const window: SolanaWindow;
+
 const SolanaSwapUI: React.FC = () => {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [fromToken, setFromToken] = useState<Token>({
@@ -44,9 +59,10 @@ const SolanaSwapUI: React.FC = () => {
   const [fromAmount, setFromAmount] = useState<string>('');
   const [toAmount, setToAmount] = useState<string>('');
   const [isSwapping, setIsSwapping] = useState<boolean>(false);
+    const [isSigning, setIsSigning] = useState<boolean>(false); // new signing state
   const [isCopied, setIsCopied] = useState<boolean>(false);
   const [showTooltip, setShowTooltip] = useState<string>('');
-  const [isFetchingQuote, setIsFetchingQuote] = useState<boolean>(false); 
+  const [isFetchingQuote, setIsFetchingQuote] = useState<boolean>(false);
   const [quoteResponse, setQuoteResponse] = useState<QuoteResponse | null>(null);
 
   const handleSwapTokens = () => {
@@ -63,11 +79,12 @@ const SolanaSwapUI: React.FC = () => {
   useEffect(() => {
     const fetchJupiterQuote = async () => {
       if (!fromAmount) {
-        setToAmount(''); // Clear toAmount if fromAmount is empty
+        setToAmount('');
+        setQuoteResponse(null);
         return;
       }
 
-      setIsFetchingQuote(true); // Start preloader
+      setIsFetchingQuote(true);
       try {
         const response = await fetch(
           `https://api.jup.ag/swap/v1/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=${parseFloat(fromAmount) * 100000000}&slippageBps=50&restrictIntermediateTokens=true`
@@ -83,10 +100,10 @@ const SolanaSwapUI: React.FC = () => {
         setQuoteResponse(data);
       } catch (error) {
         console.error("Error fetching Jupiter quote:", error);
-        setToAmount('Error fetching quote'); 
+        setToAmount('Error fetching quote');
         setQuoteResponse(null);
       } finally {
-        setIsFetchingQuote(false); 
+        setIsFetchingQuote(false);
       }
     };
 
@@ -97,6 +114,7 @@ const SolanaSwapUI: React.FC = () => {
     if (!quoteResponse || !walletAddress) return;
 
     setIsSwapping(true);
+      setIsSigning(true);
     try {
       const swapResponse = await fetch('https://api.jup.ag/swap/v1/swap', {
         method: 'POST',
@@ -123,22 +141,67 @@ const SolanaSwapUI: React.FC = () => {
 
       const swapResult = await swapResponse.json();
       console.log("Swap Response:", swapResult);
-      // Here you would typically handle the swap result, e.g., show a success message
+
+      if (swapResult.swapTransaction) {
+        const transactionBase64 = swapResult.swapTransaction;
+        //const transactionBytes = Buffer.from(transactionBase64, 'base64');  //Original Code
+        const transactionBytes = Buffer.from(transactionBase64, 'base64').values(); //Updated Code
+
+        // Deserialize the transaction
+        let transaction: VersionedTransaction;
+        try {
+            //transaction = VersionedTransaction.deserialize(transactionBytes);  //Original Code
+            transaction = VersionedTransaction.deserialize(new Uint8Array(transactionBytes)); //Updated Code
+        } catch (deserializationError) {
+            console.error("Transaction deserialization error:", deserializationError);
+            //  Handle the error, e.g., show a message to the user
+            return;
+        }
+
+        console.log("Deserialized Transaction:", transaction);
+
+          if (window.solana) {
+              try {
+                  // Get latest blockhash
+                  const latestBlockhash = await connection.getLatestBlockhash();
+
+                  // Update the transaction's message
+                  transaction.message.recentBlockhash = latestBlockhash.blockhash;
+
+                  //  Sign the transaction
+                  const signedTransaction = await window.solana.signTransaction(transaction);
+
+                  //  Log the signed transaction and signature
+                  console.log("signedTransaction", signedTransaction);
+
+                  //  Send the transaction
+                  const signature = await connection.sendRawTransaction(signedTransaction.serialize());
+
+                  console.log("Transaction Signature", signature);
+
+                  //  Confirm the transaction
+                  const confirmation = await connection.confirmTransaction(signature);
+
+                  //  Log the transaction confirmation
+                  console.log("Transaction Confirmation", confirmation);
+
+                  console.log(`Transaction completed: ${signature}`);
+              } catch (signingError) {
+                  console.error("Signing error", signingError);
+              }
+          }
+      }
+
     } catch (error) {
       console.error("Error during swap:", error);
-      // Handle the error, e.g., show an error message to the user
     } finally {
       setIsSwapping(false);
+        setIsSigning(false);
     }
   };
 
-
-  // const handleSwap = () => {
-  //   setIsSwapping(true);
-  //   setTimeout(() => {
-  //     setIsSwapping(false);
-  //   }, 2000);
-  // };
+  // const connection = new Connection(clusterApiUrl('devnet'), 'confirmed');
+  const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed');
 
   const toAmountFormat = parseFloat(toAmount) / 100000;
 
@@ -151,7 +214,7 @@ const SolanaSwapUI: React.FC = () => {
   };
 
   const openInExplorer = () => {
-    if (walletAddress) {  
+    if (walletAddress) {
       window.open(`https://explorer.solana.com/address/${walletAddress}`, '_blank');
     }
   };
@@ -305,9 +368,9 @@ const SolanaSwapUI: React.FC = () => {
                 : 'bg-indigo-600 hover:bg-indigo-700 active:scale-95'
             }`}
             onClick={handleSwap}
-            disabled={!fromAmount || isSwapping || !walletAddress}
+            disabled={!fromAmount || isSwapping || !walletAddress || isSigning}
           >
-            {isSwapping ? 'Swapping...' : 'Swap'}
+            {isSwapping ? 'Swapping...' : (isSigning ? 'Signing...' : 'Swap')}
           </button>
         </div>
 
