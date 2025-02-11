@@ -312,7 +312,7 @@ const SolanaSwapUI: React.FC = () => {
   const checkIfWalletIsConnected = async () => {
     if (typeof window !== "undefined" && window.solana?.isPhantom) {
       try {
-        const resp = await window.solana.connect({ onlyIfTrusted: true });
+        const resp = await window.solana.connect();
         setWalletAddress(resp.publicKey.toString());
       } catch (error) {
         console.error("Error connecting to wallet:", error);
