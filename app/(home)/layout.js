@@ -19,13 +19,13 @@ export async function generateMetadata() {
     // Twitter specific meta tags
     other: {
       'twitter:card': 'player',
-      'twitter:site': '@UltimateDigits',
+      'twitter:site': '@winksdotfun',
       'twitter:title': 'Solana Swap Wink by winks.fun',
       'twitter:description': 'Swap crypto on X.',
-      'twitter:player': 'https://donate-dynamic.vercel.app',
+      'twitter:player': 'https://solanaswap.vercel.app',
       'twitter:player:width': '360',
       'twitter:player:height': '560',
-      'twitter:image': 'https://res.cloudinary.com/dg8ssfxu3/image/upload/v1722584912/ud/y6uypvxozxsutmrkhot0.png',
+      'twitter:image': 'https://res.cloudinary.com/dvddnptpi/image/upload/v1739295236/v88tpojl9qcfwdwbcsgm.png',
     },
   };
 }
