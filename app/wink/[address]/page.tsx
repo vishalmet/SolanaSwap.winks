@@ -277,7 +277,7 @@ const SolanaSwapUI: React.FC = () => {
       }
     } catch (error) {
       console.error("Error during swap:", error);
-      setErrorMessage(`Swap failed: ${error.message || "Unknown error"}`);
+      setErrorMessage(`Swap failed: ${error || "Unknown error"}`);
     } finally {
       setIsSwapping(false);
       setIsSigning(false);
