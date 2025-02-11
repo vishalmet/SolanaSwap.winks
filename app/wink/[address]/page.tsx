@@ -225,9 +225,7 @@ const SolanaSwapUI: React.FC = () => {
             deserializationError
           );
           setErrorMessage(
-            `Transaction deserialization failed: ${
-              deserializationError.message || "Unknown error"
-            }`
+           errorMessage
           );
           return;
         }
