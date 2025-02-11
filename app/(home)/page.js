@@ -32,7 +32,7 @@ export default function Home() {
     const baseUrl =
       typeof window !== "undefined" && window.location.hostname === "localhost"
         ? "http://localhost:3000"
-        : "https://donate-dynamic.vercel.app";
+        : "https://solanaswap.vercel.app";
   
     const link = `${baseUrl}/wink/${address}`;
     setGeneratedLink(link);
