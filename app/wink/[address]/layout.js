@@ -14,23 +14,23 @@ const geistMono = Geist_Mono({
 });
 
 export async function generateMetadata({ params }) {
-  const baseUrl = "https://donate-dynamic.vercel.app";
-  const { address } = params;
+  const baseUrl = "https://solanaswap.vercel.app";
+  const address = params;
 
   return {
-    title: "Donate | Dynamic Payment",
-    description: "Send donations easily with dynamic payment links",
+    title: "SolanaSwap - DEX",
+    description: "Swap Solana tokens quickly and easily on SolanaSwap, a decentralized exchange.",
     metadataBase: new URL(baseUrl),
     other: {
       "twitter:card": "player",
-      "twitter:site": "@YourTwitterHandle",
-      "twitter:title": "Dynamic Payment Link",
-      "twitter:description": "Send donations easily with dynamic payment links",
+      "twitter:site": "@winksdotfun",
+      "twitter:title": "Solana swap - Decentralized Exchange",
+      "twitter:description": "Swap Solana tokens quickly and easily on SolanaSwap, a decentralized exchange.",
       "twitter:player": `${baseUrl}/wink/${address}`,
       "twitter:player:width": "360",
       "twitter:player:height": "560",
       "twitter:image":
-        "https://res.cloudinary.com/dg8ssfxu3/image/upload/v1722584912/ud/y6uypvxozxsutmrkhot0.png",
+        "https://res.cloudinary.com/dvddnptpi/image/upload/v1739295236/v88tpojl9qcfwdwbcsgm.png",
     },
   };
 }
