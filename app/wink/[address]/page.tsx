@@ -530,6 +530,9 @@ const SolanaSwapUI: React.FC = () => {
             {buttonText}
           </button>
         </div>
+        <div className="">
+          <p className=" text-indigo-600 text-sm text-center">Powered by winks.fun</p>
+        </div>
       </div>
     </div>
   );
