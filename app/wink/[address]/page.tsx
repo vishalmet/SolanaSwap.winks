@@ -269,7 +269,7 @@ const SolanaSwapUI: React.FC = () => {
             console.error("Signing error", signingError);
             setErrorMessage(
               `Transaction signing failed: ${
-                signingError.message || "Unknown error"
+                signingError || "Unknown error"
               }`
             );
           }
