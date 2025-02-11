@@ -358,7 +358,7 @@ const SolanaSwapUI: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f0f4f8] to-[#e0e7ff] font-mono text-gray-800 flex items-center justify-center p-4">
-      <div className="bg-white shadow-2xl rounded-2xl w-full max-w-md p-8 space-y-6 border-y-4 border-x border-indigo-500">
+      <div className="bg-white shadow-2xl rounded-2xl w-full max-w-md p-4 space-y-3 border-y-4 border-x border-indigo-500">
         <div className="flex justify-end">
           {walletAddress ? (
             <div className="flex items-center gap-2 bg-gray-50 rounded-lg p-2 border border-indigo-200">
@@ -403,7 +403,7 @@ const SolanaSwapUI: React.FC = () => {
           ) : (
             <button
               onClick={connectWallet}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              className="flex items-center text-sm gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
             >
               <Wallet className="h-4 w-4" />
               Connect Wallet
@@ -412,7 +412,7 @@ const SolanaSwapUI: React.FC = () => {
         </div>
 
         <div className="space-y-4">
-          <div className="bg-gray-50 p-4 rounded-lg border border-indigo-300">
+          <div className="bg-gray-50 p-2 px-4 rounded-lg border border-indigo-300">
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm text-gray-600">From</span>
               <span className="text-sm text-gray-600">
@@ -422,14 +422,14 @@ const SolanaSwapUI: React.FC = () => {
             <div className="flex items-center">
               <input
                 type="number"
-                className="w-full bg-transparent text-2xl focus:outline-none"
+                className="w-full bg-transparent text-lg focus:outline-none"
                 placeholder="0"
                 value={fromAmount}
                 onChange={handleFromAmountChange}
               />
               <div className="flex items-center bg-indigo-100 rounded-full px-3 py-1">
-                <span className="text-2xl mr-2">{fromToken.icon}</span>
-                <span>{fromToken.symbol}</span>
+                {/* <span className="text-2xl mr-2">{fromToken.icon}</span> */}
+                <span className=" text-sm">{fromToken.symbol}</span>
               </div>
             </div>
             {tokenPrices &&
@@ -450,7 +450,7 @@ const SolanaSwapUI: React.FC = () => {
             </button>
           </div>
 
-          <div className="bg-gray-50 p-4 rounded-lg border border-indigo-300">
+          <div className="bg-gray-50 p-2 px-4 rounded-lg border border-indigo-300">
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm text-gray-600">To</span>
               <span className="text-sm text-gray-600">
@@ -460,14 +460,14 @@ const SolanaSwapUI: React.FC = () => {
             <div className="flex items-center">
               <input
                 type="number"
-                className="w-full bg-transparent text-2xl focus:outline-none"
+                className="w-full bg-transparent text-lg focus:outline-none"
                 placeholder={isFetchingQuote ? "..." : "0"}
                 value={toAmountFormat}
                 readOnly
               />
               <div className="flex items-center bg-indigo-100 rounded-full px-3 py-1">
-                <span className="text-2xl mr-2">{toToken.icon}</span>
-                <span>{toToken.symbol}</span>
+                {/* <span className="text-2xl mr-2">{toToken.icon}</span> */}
+                <span className=" text-sm">{toToken.symbol}</span>
               </div>
             </div>
             {tokenPrices &&
@@ -479,7 +479,7 @@ const SolanaSwapUI: React.FC = () => {
               )}
           </div>
           {errorMessage && (
-            <div className="flex items-center justify-center gap-2 p-3 mt-2 text-red-600 bg-red-100 rounded-lg">
+            <div className="flex items-center text-sm justify-center gap-2 p-3 mt-2 text-red-600 bg-red-100 rounded-lg">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="w-5 h-5"
@@ -497,7 +497,7 @@ const SolanaSwapUI: React.FC = () => {
           )}
 
           {successMessage && signatureLink && (
-            <div className="flex items-center justify-center gap-2 p-3 mt-2 text-green-600 bg-green-100 rounded-lg">
+            <div className="flex items-center justify-center text-sm gap-2 p-3 mt-2 text-green-600 bg-green-100 rounded-lg">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="w-5 h-5"
@@ -524,7 +524,7 @@ const SolanaSwapUI: React.FC = () => {
 
           <button
             onClick={walletAddress ? handleSwap : connectWallet}
-            className="w-full px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:bg-indigo-300 disabled:cursor-not-allowed"
+            className="w-full px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:bg-indigo-300 disabled:cursor-not-allowed"
             disabled={isSwapping || isSigning || !fromAmount}
           >
             {buttonText}
