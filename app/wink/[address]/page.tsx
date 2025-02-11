@@ -126,12 +126,13 @@ const SolanaSwapUI: React.FC = () => {
           userPublicKey: walletAddress,
           dynamicComputeUnitLimit: true,
           dynamicSlippage: true,
-            prioritizationFeeLamports: {
-              priorityLevelWithMaxLamports: {
-                maxLamports: 1000000,
-                priorityLevel: "veryHigh"
-              }
-            }
+            prioritizationFeeLamports: 0,
+            // {
+            //   priorityLevelWithMaxLamports: {
+            //     maxLamports: 1000000,
+            //     priorityLevel: "veryHigh"
+            //   }
+            // }
         })
       });
 
@@ -201,7 +202,7 @@ const SolanaSwapUI: React.FC = () => {
   };
 
   // const connection = new Connection(clusterApiUrl('devnet'), 'confirmed');
-  const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed');
+  const connection = new Connection("https://muddy-fabled-sunset.solana-mainnet.quiknode.pro/435d00ad7febaa296fef61977d1e0832b9472652", 'confirmed');
 
   const toAmountFormat = parseFloat(toAmount) / 100000;
 
