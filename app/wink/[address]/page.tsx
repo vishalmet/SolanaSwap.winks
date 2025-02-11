@@ -434,14 +434,13 @@ const SolanaSwapUI: React.FC = () => {
                 <span>{fromToken.symbol}</span>
               </div>
             </div>
-            {tokenPrices && tokenPrices["So11111111111111111111111111111111111111112"] && (
-              <div className="text-xs text-gray-500 mt-1">
-                Price: $
-                {
-                  tokenPrices["So11111111111111111111111111111111111111112"]
-                }
-              </div>
-            )}
+            {tokenPrices &&
+              tokenPrices["So11111111111111111111111111111111111111112"] && (
+                <div className="text-xs text-gray-500 mt-1">
+                  Price: $
+                  {tokenPrices["So11111111111111111111111111111111111111112"]}
+                </div>
+              )}
           </div>
 
           <div className="flex justify-center">
@@ -477,9 +476,7 @@ const SolanaSwapUI: React.FC = () => {
               tokenPrices["EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"] && (
                 <div className="text-xs text-gray-500 mt-1">
                   Price: $
-                  {
-                    tokenPrices["EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"]
-                  }
+                  {tokenPrices["EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"]}
                 </div>
               )}
           </div>
@@ -501,7 +498,7 @@ const SolanaSwapUI: React.FC = () => {
             </div>
           )}
 
-          {successMessage && (
+          {successMessage && signatureLink && (
             <div className="flex items-center justify-center gap-2 p-3 mt-2 text-green-600 bg-green-100 rounded-lg">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -511,21 +508,19 @@ const SolanaSwapUI: React.FC = () => {
               >
                 <path
                   fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4a1 1 0 00-1.414-1.414z"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
                   clipRule="evenodd"
                 />
               </svg>
-              {successMessage}
-              {signatureLink && (
-                <a
-                  href={signatureLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline"
-                >
-                  View on Solscan
-                </a>
-              )}
+              <span className="text-sm">{successMessage}</span>
+              <a
+                href={signatureLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ml-1 text-blue-600 hover:underline"
+              >
+                View on Solscan
+              </a>
             </div>
           )}
 
