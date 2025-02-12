@@ -52,7 +52,7 @@ export default function Home() {
     const baseUrl =
       typeof window !== "undefined" && window.location.hostname === "localhost"
         ? "http://localhost:3000"
-        : "https://solanaswap-winks.vercel.app";
+        : "https://bnbswap-winks.vercel.app";
     const link = `${baseUrl}/wink/${address}`;
     setGeneratedLink(link);
   };
