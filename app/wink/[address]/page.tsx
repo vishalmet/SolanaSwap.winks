@@ -14,6 +14,8 @@ import { useWalletClient, useAccount, useBalance } from "wagmi";
 import { parseEther } from "viem";
 import axios from "axios";
 import { useParams } from "next/navigation";
+import { ethers } from 'ethers';
+
 
 interface Token {
   symbol: string;
@@ -75,6 +77,22 @@ const SolanaSwapUI: React.FC = () => {
   const [bnbAmount, setBnbAmount] = useState<string>("");
   const [points, setPoints] = useState<number | null>(null);
   const [quoteData, setQuoteData] = useState<any | null>(null);
+  const [weiAmount, setWeiAmount] = useState<string>("");
+
+
+  const handleBnbAmountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newBnbAmount = event.target.value;
+    setBnbAmount(newBnbAmount);
+
+    try {
+      // Convert BNB to Wei using ethers.js
+      const wei = ethers.utils.parseEther(newBnbAmount);
+      setWeiAmount(wei.toString());
+    } catch (error: any) {
+      console.error("Error converting to Wei:", error.message);
+      setWeiAmount(""); // Clear weiAmount on error
+    }
+  };
 
   const { isConnected, address } = useAccount();
   const params = useParams();
@@ -201,10 +219,10 @@ const SolanaSwapUI: React.FC = () => {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-        const response = await axios.post('/api/quote', {
+        const response = await axios.post('/api/quote-proxy', {
             src: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
             dst: destAddress,
-            amount: bnbAmount
+            amount: weiAmount
         });
         
         setQuoteData(response.data);
@@ -254,10 +272,7 @@ useEffect(() => {
     setShowAdditionalUI(true);
   };
 
-  const handleBnbAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setBnbAmount(e.target.value);
-    console.log("BNB Amount:", bnbAmount);
-  };
+ 
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-200 via-pink-100 to-yellow-100 text-gray-800 flex items-center justify-center p-4 font-mono relative overflow-hidden">
