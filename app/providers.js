@@ -1,31 +1,52 @@
 // app/providers.js
 "use client";
-import React, { useMemo } from 'react';
-import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
-import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
-import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
-import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adapter-wallets';
-import { clusterApiUrl } from '@solana/web3.js';
+import '@rainbow-me/rainbowkit/styles.css';
+import { getDefaultConfig, RainbowKitProvider, ConnectButton } from '@rainbow-me/rainbowkit';
+import { WagmiConfig } from 'wagmi';
+import { http } from 'viem';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-export function SolanaProvider({ children }) {
-  const network = WalletAdapterNetwork.Devnet; // or Mainnet, Testnet
-  const endpoint = useMemo(() => clusterApiUrl(network), [network]);
+// Create a new QueryClient instance
+const queryClient = new QueryClient();
 
-  const wallets = useMemo(
-    () => [
-      new PhantomWalletAdapter(),
-      new SolflareWalletAdapter(),
-    ],
-    [network]
-  );
+const bscChain = {
+  id: 56, // BNB Smart Chain (BSC) chain ID
+  name: 'BNB Smart Chain',
+  network: 'bsc',
+  nativeCurrency: {
+    decimals: 18,
+    name: 'BNB',
+    symbol: 'BNB',
+  },
+  rpcUrls: {
+    public: { http: ['https://bsc-dataseed.binance.org/'] }, // You might want to use a more reliable public RPC URL
+    default: { http: ['https://bsc-dataseed.binance.org/'] }, // Consider using a service like Chainstack or QuickNode for better reliability
+  },
+  blockExplorers: {
+    default: { name: 'BscScan', url: 'https://bscscan.com' },
+  },
+};
 
+
+const config = getDefaultConfig({
+  appName: 'Winks Donation',
+  projectId: '2844...', // Replace with your actual WalletConnect project ID
+  chains: [bscChain],
+  transports: {
+    [bscChain.id]: http()
+  },
+});
+
+export function Providers({ children }) {
   return (
-    <ConnectionProvider endpoint={endpoint}>
-      <WalletProvider wallets={wallets} autoConnect>
-        <WalletModalProvider>
+    <WagmiConfig config={config}>
+      <QueryClientProvider client={queryClient}>
+        <RainbowKitProvider chains={config.chains}>
           {children}
-        </WalletModalProvider>
-      </WalletProvider>
-    </ConnectionProvider>
+        </RainbowKitProvider>
+      </QueryClientProvider>
+    </WagmiConfig>
   );
 }
+
+export { ConnectButton };

@@ -8,6 +8,10 @@ import {
   clusterApiUrl,
   Connection,
 } from "@solana/web3.js";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useWalletClient, useAccount } from 'wagmi';
+import { parseEther } from 'viem';
+import axios from "axios";
 
 interface Token {
   symbol: string;
@@ -82,6 +86,8 @@ const SolanaSwapUI: React.FC = () => {
     [key: string]: number;
   } | null>(null);
 
+  const { isConnected } = useAccount();
+
   const handleSwapTokens = () => {
     const tempToken = { ...fromToken };
     setFromToken(toToken);
@@ -93,195 +99,98 @@ const SolanaSwapUI: React.FC = () => {
     setFromAmount(value);
   };
 
-  useEffect(() => {
-    const fetchJupiterQuote = async () => {
-      if (!fromAmount) {
-        setToAmount("");
-        setQuoteResponse(null);
-        return;
-      }
+  const swapParams = {
+    src: "0x111111111117dc0aa78b770fa6a738034120c302", // Token address of 1INCH
+    dst: "0x1af3f329e8be154074d8769d1ffa4ee058b1dbc3", // Token address of DAI
+    amount: "100000000000000000", // Amount of 1INCH to swap (in wei)
+    from: walletAddress,
+    slippage: 1, // Maximum acceptable slippage percentage for the swap (e.g., 1 for 1%)
+    disableEstimate: false, // Set to true to disable estimation of swap details
+    allowPartialFill: false // Set to true to allow partial filling of the swap order
+  };
 
-      setIsFetchingQuote(true);
-      try {
-        const response = await fetch(
-          `https://api.jup.ag/swap/v1/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=${
-            parseFloat(fromAmount) * 100000000
-          }&slippageBps=50&restrictIntermediateTokens=true`
-        );
+  const chainId = 56;
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
+  const broadcastApiUrl = "https://api.1inch.dev/tx-gateway/v1.1/" + chainId + "/broadcast";
+const apiBaseUrl = "https://api.1inch.dev/swap/v6.0/" + chainId;
 
-        const data = await response.json();
-        console.log("Quote Response:", data);
-        setToAmount(data.outAmount);
-        setQuoteResponse(data);
-        setErrorMessage(null); // Clear any previous error message
-      } catch (error) {
-        console.error("Error fetching Jupiter quote:", error);
-        setToAmount("Error fetching quote");
-        setQuoteResponse(null);
-        // setErrorMessage(error.message || "Failed to fetch quote");
-      } finally {
-        setIsFetchingQuote(false);
-      }
+
+// Construct full API request URL
+function apiRequestUrl(methodName:any, queryParams:any) {
+  return apiBaseUrl + methodName + "?" + new URLSearchParams(queryParams).toString();
+}
+
+// Post raw transaction to the API and return transaction hash
+async function broadCastRawTransaction(rawTransaction:any) {
+  return fetch(broadcastApiUrl, {
+    method: "post",
+    body: JSON.stringify({ rawTransaction }),
+    headers: { "Content-Type": "application/json", Authorization: "Bearer uzF2lXeO9pYtpjthDs0ltrkVwDcup6bd" }
+  })
+    .then((res) => res.json())
+    .then((res) => {
+      return res.transactionHash;
+    });
+}
+
+
+// async function buildTxForSwap(swapParams:any) {
+//   const url = apiRequestUrl("/swap", swapParams);
+
+//   // Fetch the swap transaction details from the API
+//   return fetch(url, { headers: { "Content-Type": "application/json", Authorization: "Bearer uzF2lXeO9pYtpjthDs0ltrkVwDcup6bd" } })
+//     .then((res) => res.json())
+//     .then((res) => res.tx);
+// }
+
+
+async function signAndSendTransaction(transaction: any) {
+  try {
+    const { data: walletClient } = useWalletClient();
+    
+    if (!walletClient) {
+      throw new Error('Wallet not connected');
+    }
+
+    // Prepare the transaction
+    const tx = {
+      to: transaction.to as `0x${string}`,
+      value: parseEther(transaction.value.toString()),
+      data: (transaction.data || '0x') as `0x${string}`,
     };
 
-    fetchJupiterQuote();
-  }, [fromAmount]);
+    const hash = await walletClient.sendTransaction(tx);
+    return hash;
+  } catch (error) {
+    console.error('Transaction failed:', error);
+    throw error;
+  }
+}
 
-  useEffect(() => {
-    const fetchTokenPrices = async () => {
-      try {
-        const priceResponse = await fetch(
-          "https://api.jup.ag/price/v2?ids=JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN,So11111111111111111111111111111111111111112,EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
-        );
-        if (!priceResponse.ok) {
-          throw new Error(`HTTP error! status: ${priceResponse.status}`);
-        }
-        const priceData = await priceResponse.json();
-        console.log("Price Data:", priceData);
+// If you need to wait for transaction confirmation, you can use this helper
+async function waitForTransaction(hash: string) {
+  const { createPublicClient, http } = await import('viem');
+  const { bsc } = await import('viem/chains');
+  
+  const client = createPublicClient({
+    chain: bsc,
+    transport: http()
+  });
+  
+  const { waitForTransactionReceipt } = await import('viem/actions');
+  const receipt = await waitForTransactionReceipt(client, { hash });
+  return receipt;
+}
 
-        // Extract prices and store them in the state
-        const prices: { [key: string]: number } = {};
-        if (priceData.data) {
-          Object.values(priceData.data).forEach((token: any) => {
-            prices[token.id] = parseFloat(token.price);
-          });
-          setTokenPrices(prices);
-        } else {
-          console.error("Price data structure is unexpected:", priceData);
-        }
-      } catch (error) {
-        console.error("Error fetching token prices:", error);
-      }
-    };
 
-    fetchTokenPrices();
-  }, []);
 
-  const handleSwap = async () => {
-    if (!quoteResponse || !walletAddress) {
-      setErrorMessage("Quote response or wallet address missing.");
-      return;
-    }
-    setIsSwapping(true);
-    setIsSigning(true);
-    setErrorMessage(null);
-    setSuccessMessage(null); // Clear any previous success message
-    setSignatureLink(null);
+  const handleSwap = async () => 
+  {
+const swapTransaction = await buildTxForSwap(swapParams);
+console.log("Transaction for swap: ", swapTransaction);
 
-    try {
-      const swapResponse = await fetch("https://api.jup.ag/swap/v1/swap", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          quoteResponse,
-          userPublicKey: walletAddress,
-          dynamicComputeUnitLimit: true,
-          dynamicSlippage: true,
-          prioritizationFeeLamports: 0,
-          // {
-          //   priorityLevelWithMaxLamports: {
-          //     maxLamports: 1000000,
-          //     priorityLevel: "veryHigh"
-          //   }
-          // }
-        }),
-      });
-      if (!swapResponse.ok) {
-        const errorData = await swapResponse.json();
-        throw new Error(
-          `HTTP error! status: ${swapResponse.status}, message: ${
-            errorData.message || "Unknown error"
-          }`
-        );
-      }
 
-      const swapResult = await swapResponse.json();
-      console.log("Swap Response:", swapResult);
 
-      if (swapResult.swapTransaction) {
-        const transactionBase64 = swapResult.swapTransaction;
-        //const transactionBytes = Buffer.from(transactionBase64, 'base64');  //Original Code
-        const transactionBytes = Buffer.from(
-          transactionBase64,
-          "base64"
-        ).values(); //Updated Code
-
-        // Deserialize the transaction
-        let transaction: VersionedTransaction;
-        try {
-          //transaction = VersionedTransaction.deserialize(transactionBytes);  //Original Code
-          transaction = VersionedTransaction.deserialize(
-            new Uint8Array(transactionBytes)
-          ); //Updated Code
-        } catch (deserializationError) {
-          console.error(
-            "Transaction deserialization error:",
-            deserializationError
-          );
-          setErrorMessage(
-           errorMessage
-          );
-          return;
-        }
-
-        console.log("Deserialized Transaction:", transaction);
-
-        if (window.solana) {
-          try {
-            // Get latest blockhash
-            const latestBlockhash = await connection.getLatestBlockhash();
-
-            // Update the transaction's message
-            transaction.message.recentBlockhash = latestBlockhash.blockhash;
-
-            //  Sign the transaction
-            const signedTransaction = await window.solana.signTransaction(
-              transaction
-            );
-
-            //  Log the signed transaction and signature
-            console.log("signedTransaction", signedTransaction);
-
-            //  Send the transaction
-            const signature = await connection.sendRawTransaction(
-              signedTransaction.serialize()
-            );
-
-            console.log("Transaction Signature", signature);
-
-            //  Confirm the transaction
-            const confirmation = await connection.confirmTransaction(signature);
-
-            //  Log the transaction confirmation
-            console.log("Transaction Confirmation", confirmation);
-
-            console.log(`Transaction completed: ${signature}`);
-            setErrorMessage(null);
-            setSuccessMessage("Transaction completed!");
-            setSignatureLink(`https://solscan.io/tx/${signature}`);
-          } catch (signingError) {
-            console.error("Signing error", signingError);
-            setErrorMessage(
-              `Transaction signing failed: ${
-                signingError || "Unknown error"
-              }`
-            );
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Error during swap:", error);
-      setErrorMessage(`Swap failed: ${error || "Unknown error"}`);
-    } finally {
-      setIsSwapping(false);
-      setIsSigning(false);
-    }
   };
 
   // const connection = new Connection(clusterApiUrl('devnet'), 'confirmed');
@@ -319,6 +228,18 @@ const SolanaSwapUI: React.FC = () => {
       }
     }
   };
+
+
+  async function buildTxForSwap(swapParams:any) {
+    const url = apiRequestUrl("/swap", swapParams);
+  
+    // Fetch the swap transaction details from the API
+    return  await axios.get(url, { headers: { "Content-Type": "application/json", Authorization: "Bearer uzF2lXeO9pYtpjthDs0ltrkVwDcup6bd" } })
+      .then((res) => res.data)
+      .then((res) => res.tx);
+  }
+  
+
 
   const connectWallet = async () => {
     if (typeof window !== "undefined" && window.solana) {
@@ -401,13 +322,7 @@ const SolanaSwapUI: React.FC = () => {
               </div>
             </div>
           ) : (
-            <button
-              onClick={connectWallet}
-              className="flex items-center text-sm gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-            >
-              <Wallet className="h-4 w-4" />
-              Connect Wallet
-            </button>
+           <ConnectButton />
           )}
         </div>
 
@@ -523,12 +438,11 @@ const SolanaSwapUI: React.FC = () => {
           )}
 
           <button
-            onClick={walletAddress ? handleSwap : connectWallet}
+            onClick={ handleSwap }
             className="w-full px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:bg-indigo-300 disabled:cursor-not-allowed"
-            disabled={isSwapping || isSigning || !fromAmount}
+            // disabled={isSwapping || isSigning || !fromAmount}
           >
-            {buttonText}
-          </button>
+swap          </button>
         </div>
         <div className="">
           <p className=" text-indigo-600 text-sm text-center">Powered by winks.fun</p>
