@@ -72,6 +72,9 @@ const SolanaSwapUI: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [apiResponse, setApiResponse] = useState<any | null>(null);
   const [showAdditionalUI, setShowAdditionalUI] = useState<boolean>(false);
+  const [bnbAmount, setBnbAmount] = useState<string>("");
+  const [points, setPoints] = useState<number | null>(null);
+  const [quoteData, setQuoteData] = useState<any | null>(null);
 
   const { isConnected, address } = useAccount();
   const params = useParams();
@@ -168,6 +171,7 @@ const SolanaSwapUI: React.FC = () => {
 
   const handleSwap = async () => {
     const swapTransaction = await buildTxForSwap(swapParams);
+
     console.log("Transaction for swap: ", swapTransaction);
 
     const res = await signAndSendTransaction(swapTransaction);
@@ -193,6 +197,31 @@ const SolanaSwapUI: React.FC = () => {
   }
 
   const srcAddress = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
+  const dstAddress = destAddress;
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+        const response = await axios.post('/api/quote', {
+            src: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+            dst: destAddress,
+            amount: bnbAmount
+        });
+        
+        setQuoteData(response.data);
+        console.log(response.data);
+    } catch (error) {
+        console.error(error);
+        setQuoteData({ error: 'Failed to fetch quote' });
+    } finally {
+        setIsLoading(false);
+    }
+};
+
+useEffect(() => {
+    if (bnbAmount && destAddress) {
+        fetchData();
+    }
+}, [bnbAmount, destAddress]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -225,6 +254,11 @@ const SolanaSwapUI: React.FC = () => {
     setShowAdditionalUI(true);
   };
 
+  const handleBnbAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setBnbAmount(e.target.value);
+    console.log("BNB Amount:", bnbAmount);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-200 via-pink-100 to-yellow-100 text-gray-800 flex items-center justify-center p-4 font-mono relative overflow-hidden">
       {/* Animated background patterns */}
@@ -237,7 +271,6 @@ const SolanaSwapUI: React.FC = () => {
       <div className="relative w-full max-w-md">
         {/* Card glow effect */}
         <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-pink-100 to-yellow-300 rounded-2xl blur opacity-70" />
-
         {/* Main card */}
         <div className="relative bg-white shadow-2xl rounded-2xl p-6 space-y-4 border border-white">
           {/* Connect Button */}
@@ -251,32 +284,77 @@ const SolanaSwapUI: React.FC = () => {
           )}
           {!showAdditionalUI && (
             <div className="">
-              <div className="transform transition-all duration-300 hover:scale-102">
-                <div className="p-2 px-4 rounded-xl bg-gradient-to-r from-cyan-50 via-pink-50 to-yellow-50 shadow-lg border border-white/50">
-                  <div className="flex items-center justify-between space-x-4">
-                    <div className=" flex items-center space-x-4">
-                      <div className="relative">
-                        <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-pink-300 to-yellow-300 rounded-full blur-sm animate-pulse" />
-                        <img
-                          src="https://res.cloudinary.com/dvddnptpi/image/upload/v1739379832/frfgvnra42g6x7ovmana.webp"
-                          alt="Token Logo"
-                          className="relative w-10 h-10 rounded-full border-2 border-white shadow-lg"
-                        />
-                      </div>
-                      <div>
-                        <p className="text-gray-800 font-bold">BNB </p>
-                        <p className="text-gray-500 text-sm">BNB </p>
-                      </div>
-                    </div>
-                    <div className="">
-                      <button
-                        className="w-full flex items-center p-3 px-4 rounded-xl font-bold transition-all duration-300 transform bg-gradient-to-r from-cyan-400 via-pink-300 to-yellow-300 text-white hover:opacity-90 active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
-                        onClick={handleContinue}
-                      >
-                        Continue <ArrowRight />
-                      </button>
+              {/* Main card */}
+              <div className="bg-white shadow-lg rounded-2xl p-6 space-y-4 border border-gray-200">
+                {/* Points Display */}
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                  <div className="text-center">
+                    <p className="text-sm text-gray-600 mb-1">Your Points</p>
+                    <div className="text-3xl font-bold text-gray-900">
+                      {points || 0}
                     </div>
                   </div>
+                </div>
+
+                {/* Memecoin Card */}
+                <div className="p-4 rounded-xl bg-gray-50 border border-gray-200">
+                  {/* Token Info */}
+                  <div className="flex items-center space-x-4 mb-4">
+                    <img
+                      src={
+                        apiResponse?.LogoURI ||
+                        "https://res.cloudinary.com/dvddnptpi/image/upload/v1739379832/frfgvnra42g6x7ovmana.webp"
+                      }
+                      alt="Token Logo"
+                      className="w-16 h-16 rounded-full border-2 border-white shadow-sm"
+                    />
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900">
+                        {apiResponse?.name || "Loading..."}
+                      </h3>
+                      <p className="text-gray-600">
+                        {apiResponse?.symbol || "MEME"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  <p className="text-gray-600 text-sm mb-4">
+                    Buy {apiResponse?.symbol || "meme"} tokens with BNB in one
+                    click and earn points!
+                  </p>
+
+                  {/* Button */}
+                  <button
+                    className="w-full flex items-center justify-center p-3 rounded-xl font-semibold
+                         bg-blue-600 text-white
+                         hover:bg-blue-700 active:scale-[0.98]
+                         disabled:opacity-50 disabled:cursor-not-allowed
+                         transition-all duration-200"
+                    onClick={handleContinue}
+                  >
+                    <span className="mr-2">Continue</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Stats Cards */}
+                {/* <div className="grid grid-cols-2 gap-4">
+            <div className="bg-gray-50 p-3 rounded-xl text-center border border-gray-200">
+              <p className="text-sm text-gray-600">Current Price</p>
+              <p className="font-bold text-gray-900">${apiResponse?.price || "0.00"}</p>
+            </div>
+            <div className="bg-gray-50 p-3 rounded-xl text-center border border-gray-200">
+              <p className="text-sm text-gray-600">24h Volume</p>
+              <p className="font-bold text-gray-900">${apiResponse?.volume24h || "0.00"}</p>
+            </div>
+          </div> */}
+
+                {/* Footer */}
+                <div className="pt-4">
+                  <p className="text-center text-sm font-medium text-gray-600">
+                    Powered by winks.fun
+                  </p>
                 </div>
               </div>
             </div>
@@ -303,7 +381,9 @@ const SolanaSwapUI: React.FC = () => {
               )}
               {showAdditionalUI && (
                 <div className="p-2 px-4 rounded-xl bg-gradient-to-r from-cyan-50 via-pink-50 to-yellow-50 shadow-lg border border-white/50">
-                  <div className="flex items-center justify-between space-x-4">
+                  <div className="flex flex-col items-start justify-between space-y-2">
+                    {" "}
+                    {/* Changed to flex-col */}
                     <div className=" flex items-center space-x-4">
                       <div className="relative">
                         <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-pink-300 to-yellow-300 rounded-full blur-sm animate-pulse" />
@@ -318,6 +398,13 @@ const SolanaSwapUI: React.FC = () => {
                         <p className="text-gray-500 text-sm">BNB </p>
                       </div>
                     </div>
+                    <input
+                      type="number"
+                      placeholder="Enter BNB amount"
+                      value={bnbAmount}
+                      onChange={handleBnbAmountChange}
+                      className="w-full p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-cyan-200"
+                    />
                   </div>
                 </div>
               )}
