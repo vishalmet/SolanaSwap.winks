@@ -1,16 +1,17 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { RefreshCw, Wallet, Copy, ExternalLink } from "lucide-react";
 import {
-  VersionedTransaction,
-  PublicKey,
-  clusterApiUrl,
-  Connection,
-} from "@solana/web3.js";
+  RefreshCw,
+  Wallet,
+  Copy,
+  ExternalLink,
+  ArrowRight,
+} from "lucide-react";
+
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useWalletClient, useAccount } from 'wagmi';
-import { parseEther } from 'viem';
+import { useWalletClient, useAccount, useBalance } from "wagmi";
+import { parseEther } from "viem";
 import axios from "axios";
 import { useParams } from "next/navigation";
 
@@ -68,264 +69,294 @@ const SolanaSwapUI: React.FC = () => {
   const [tokenPrices, setTokenPrices] = useState<{
     [key: string]: number;
   } | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [apiResponse, setApiResponse] = useState<any | null>(null);
+  const [showAdditionalUI, setShowAdditionalUI] = useState<boolean>(false);
 
-  const { isConnected , address} = useAccount();
+  const { isConnected, address } = useAccount();
   const params = useParams();
   const destAddress = params.address;
-
-  
 
   const handleFromAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setFromAmount(value);
   };
 
+  const result = useBalance({
+    address: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+  });
+
   const swapParams = {
     src: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", // Token address of 1INCH
     dst: destAddress, // Token address of DAI
-    amount: "1000000", // Amount of 1INCH to swap (in wei)
+    amount: "1000000",
     from: address,
     slippage: 1, // Maximum acceptable slippage percentage for the swap (e.g., 1 for 1%)
     disableEstimate: false, // Set to true to disable estimation of swap details
-    allowPartialFill: false // Set to true to allow partial filling of the swap order
+    allowPartialFill: false, // Set to true to allow partial filling of the swap order
   };
 
   const chainId = 56;
 
-  const broadcastApiUrl = "https://api.1inch.dev/tx-gateway/v1.1/" + chainId + "/broadcast";
-const apiBaseUrl = "https://api.1inch.dev/swap/v6.0/" + chainId;
+  const broadcastApiUrl =
+    "https://api.1inch.dev/tx-gateway/v1.1/" + chainId + "/broadcast";
+  const apiBaseUrl = "https://api.1inch.dev/swap/v6.0/" + chainId;
 
-
-// Construct full API request URL
-function apiRequestUrl(methodName:any, queryParams:any) {
-  return apiBaseUrl + methodName + "?" + new URLSearchParams(queryParams).toString();
-}
-
-// Post raw transaction to the API and return transaction hash
-async function broadCastRawTransaction(rawTransaction:any) {
-  return fetch(broadcastApiUrl, {
-    method: "post",
-    body: JSON.stringify({ rawTransaction }),
-    headers: { "Content-Type": "application/json", Authorization: "Bearer uzF2lXeO9pYtpjthDs0ltrkVwDcup6bd" }
-  })
-    .then((res) => res.json())
-    .then((res) => {
-      return res.transactionHash;
-    });
-}
-
-
-// async function buildTxForSwap(swapParams:any) {
-//   const url = apiRequestUrl("/swap", swapParams);
-
-//   // Fetch the swap transaction details from the API
-//   return fetch(url, { headers: { "Content-Type": "application/json", Authorization: "Bearer uzF2lXeO9pYtpjthDs0ltrkVwDcup6bd" } })
-//     .then((res) => res.json())
-//     .then((res) => res.tx);
-// }
-const { data: walletClient } = useWalletClient();
-
-
-async function signAndSendTransaction(transaction: any) {
-  try {
-    
-    if (!walletClient) {
-      throw new Error('Wallet not connected');
-    }
-
-    // Prepare the transaction
-    const tx = {
-      to: transaction.to as `0x${string}`,
-      value: transaction.value.toString(),
-      data: (transaction.data || '0x') as `0x${string}`,
-    };
-
-    const hash = await walletClient.sendTransaction(tx);
-    return hash;
-  } catch (error) {
-    console.error('Transaction failed:', error);
-    throw error;
+  // Construct full API request URL
+  function apiRequestUrl(methodName: any, queryParams: any) {
+    return (
+      apiBaseUrl +
+      methodName +
+      "?" +
+      new URLSearchParams(queryParams).toString()
+    );
   }
-}
 
-// If you need to wait for transaction confirmation, you can use this helper
-async function waitForTransaction(hash: string) {
-  const { createPublicClient, http } = await import('viem');
-  const { bsc } = await import('viem/chains');
-  
-  const client = createPublicClient({
-    chain: bsc,
-    transport: http()
-  });
-  
-  const { waitForTransactionReceipt } = await import('viem/actions');
-  const receipt = await waitForTransactionReceipt(client, { hash });
-  return receipt;
-}
+  // Post raw transaction to the API and return transaction hash
+  async function broadCastRawTransaction(rawTransaction: any) {
+    return fetch(broadcastApiUrl, {
+      method: "post",
+      body: JSON.stringify({ rawTransaction }),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer uzF2lXeO9pYtpjthDs0ltrkVwDcup6bd",
+      },
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        return res.transactionHash;
+      });
+  }
 
+  const { data: walletClient } = useWalletClient();
 
+  async function signAndSendTransaction(transaction: any) {
+    try {
+      if (!walletClient) {
+        throw new Error("Wallet not connected");
+      }
 
-  const handleSwap = async () => 
-  {
-const swapTransaction = await buildTxForSwap(swapParams);
-console.log("Transaction for swap: ", swapTransaction);
+      // Prepare the transaction
+      const tx = {
+        to: transaction.to as `0x${string}`,
+        value: transaction.value.toString(),
+        data: (transaction.data || "0x") as `0x${string}`,
+      };
 
-const res = await signAndSendTransaction(swapTransaction);
-console.log("Transaction hash: ", res);
+      const hash = await walletClient.sendTransaction(tx);
+      return hash;
+    } catch (error) {
+      console.error("Transaction failed:", error);
+      throw error;
+    }
+  }
 
-const receipt = await waitForTransaction(res);
-console.log("Transaction receipt: ", receipt);
+  // If you need to wait for transaction confirmation, you can use this helper
+  async function waitForTransaction(hash: string) {
+    const { createPublicClient, http } = await import("viem");
+    const { bsc } = await import("viem/chains");
 
+    const client = createPublicClient({
+      chain: bsc,
+      transport: http(),
+    });
 
+    const { waitForTransactionReceipt } = await import("viem/actions");
+    const receipt = await waitForTransactionReceipt(client, { hash });
+    return receipt;
+  }
 
+  const handleSwap = async () => {
+    const swapTransaction = await buildTxForSwap(swapParams);
+    console.log("Transaction for swap: ", swapTransaction);
+
+    const res = await signAndSendTransaction(swapTransaction);
+    console.log("Transaction hash: ", res);
+
+    const receipt = await waitForTransaction(res);
+    console.log("Transaction receipt: ", receipt);
   };
-
- 
-
-
 
   async function buildTxForSwap(swapParams: any) {
     const url = apiRequestUrl("/swap", swapParams);
-    
+
     try {
-      const response = await axios.post('/api/swap-proxy', {
-        url: url
+      const response = await axios.post("/api/swap-proxy", {
+        url: url,
       });
-      
+
       return response.data.tx;
     } catch (error) {
       console.error("Error in buildTxForSwap:", error);
       throw error;
     }
   }
-  
 
+  const srcAddress = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
 
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const response = await axios.get(
+          `/api/1inch-proxy?address=${destAddress}`
+        );
+        setApiResponse(response.data);
+        console.log("API Response:", response.data);
+      } catch (error) {
+        console.error("API Error:", error);
+        setApiResponse({ error: "Failed to fetch token data" });
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
+    if (showAdditionalUI) {
+      fetchData();
+    }
+  }, [showAdditionalUI]);
+
+  const ResData = apiResponse;
+  console.log("====================================");
+  console.log(ResData);
+  console.log("====================================");
+
+  const handleContinue = () => {
+    setShowAdditionalUI(true);
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f0f4f8] to-[#e0e7ff] font-mono text-gray-800 flex items-center justify-center p-4">
-      <div className="bg-white shadow-2xl rounded-2xl w-full max-w-md p-4 space-y-3 border-y-4 border-x border-indigo-500">
-        <div className="flex justify-end">
-        
-           <ConnectButton />
+    <div className="min-h-screen bg-gradient-to-br from-cyan-200 via-pink-100 to-yellow-100 text-gray-800 flex items-center justify-center p-4 font-mono relative overflow-hidden">
+      {/* Animated background patterns */}
+      <div className="absolute inset-0 bg-white">
+        <div className="absolute top-0 left-0 w-64 h-64 bg-cyan-300/20 rounded-full -translate-x-1/2 -translate-y-1/2 blur-2xl animate-pulse" />
+        <div className="absolute top-1/4 right-0 w-72 h-72 bg-pink-300/20 rounded-full translate-x-1/2 blur-2xl animate-pulse delay-75" />
+        <div className="absolute bottom-0 left-1/3 w-80 h-80 bg-yellow-300/20 rounded-full translate-y-1/2 blur-2xl animate-pulse delay-150" />
+      </div>
 
-        </div>
+      <div className="relative w-full max-w-md">
+        {/* Card glow effect */}
+        <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-pink-100 to-yellow-300 rounded-2xl blur opacity-70" />
 
-        <div className="space-y-4">
-          <div className="bg-gray-50 p-2 px-4 rounded-lg border border-indigo-300">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm text-gray-600">From</span>
-              <span className="text-sm text-gray-600">
-                Balance: {fromToken.balance} {fromToken.symbol}
-              </span>
-            </div>
-            <div className="flex items-center">
-              <input
-                type="number"
-                className="w-full bg-transparent text-lg focus:outline-none"
-                placeholder="0"
-                value={fromAmount}
-                onChange={handleFromAmountChange}
-              />
-              <div className="flex items-center bg-indigo-100 rounded-full px-3 py-1">
-                {/* <span className="text-2xl mr-2">{fromToken.icon}</span> */}
-                <span className=" text-sm">{fromToken.symbol}</span>
+        {/* Main card */}
+        <div className="relative bg-white shadow-2xl rounded-2xl p-6 space-y-4 border border-white">
+          {/* Connect Button */}
+          <div className="flex justify-end mb-2">
+            <ConnectButton />
+          </div>
+
+          <div className="">
+            <p>Buy DOGE tokens with BNB in one-click</p>
+          </div>
+          <div className="">
+            <div className="transform transition-all duration-300 hover:scale-102">
+              <div className="p-2 px-4 rounded-xl bg-gradient-to-r from-cyan-50 via-pink-50 to-yellow-50 shadow-lg border border-white/50">
+                <div className="flex items-center justify-between space-x-4">
+                  <div className=" flex items-center space-x-4">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-pink-300 to-yellow-300 rounded-full blur-sm animate-pulse" />
+                      <img
+                        src="https://res.cloudinary.com/dvddnptpi/image/upload/v1739379832/frfgvnra42g6x7ovmana.webp"
+                        alt="Token Logo"
+                        className="relative w-10 h-10 rounded-full border-2 border-white shadow-lg"
+                      />
+                    </div>
+                    <div>
+                      <p className="text-gray-800 font-bold">BNB </p>
+                      <p className="text-gray-500 text-sm">BNB </p>
+                    </div>
+                  </div>
+                  <div className="">
+                    <button
+                      className="w-full flex items-center p-3 px-4 rounded-xl font-bold transition-all duration-300 transform bg-gradient-to-r from-cyan-400 via-pink-300 to-yellow-300 text-white hover:opacity-90 active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+                      onClick={handleContinue}
+                    >
+                      Continue <ArrowRight />
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
-            {tokenPrices &&
-              tokenPrices["So11111111111111111111111111111111111111112"] && (
-                <div className="text-xs text-gray-500 mt-1">
-                  Price: $
-                  {tokenPrices["So11111111111111111111111111111111111111112"]}
+          </div>
+
+          {showAdditionalUI && (
+            <>
+              {/* Error Message */}
+              {errorMessage && (
+                <div className="flex items-center text-sm justify-center gap-2 p-4 mt-2 text-red-600 bg-red-50 rounded-xl border border-red-200">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="w-5 h-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  {errorMessage}
                 </div>
               )}
-          </div>
 
-          <div className="flex justify-center">
-           
-          </div>
-
-          <div className="bg-gray-50 p-2 px-4 rounded-lg border border-indigo-300">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm text-gray-600">To</span>
-              <span className="text-sm text-gray-600">
-                Balance: {toToken.balance} {toToken.symbol}
-              </span>
-            </div>
-            <div className="flex items-center">
-              <input
-                type="number"
-                className="w-full bg-transparent text-lg focus:outline-none"
-                placeholder={isFetchingQuote ? "..." : "0"}
-                readOnly
-              />
-              <div className="flex items-center bg-indigo-100 rounded-full px-3 py-1">
-                {/* <span className="text-2xl mr-2">{toToken.icon}</span> */}
-                <span className=" text-sm">{toToken.symbol}</span>
+              <div className="p-2 px-4 rounded-xl bg-gradient-to-r from-cyan-50 via-pink-50 to-yellow-50 shadow-lg border border-white/50">
+                <div className="flex items-center justify-between space-x-4">
+                  <div className=" flex items-center space-x-4">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-pink-300 to-yellow-300 rounded-full blur-sm animate-pulse" />
+                      <img
+                        src="https://res.cloudinary.com/dvddnptpi/image/upload/v1739379832/frfgvnra42g6x7ovmana.webp"
+                        alt="Token Logo"
+                        className="relative w-10 h-10 rounded-full border-2 border-white shadow-lg"
+                      />
+                    </div>
+                    <div>
+                      <p className="text-gray-800 font-bold">BNB </p>
+                      <p className="text-gray-500 text-sm">BNB </p>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-            {tokenPrices &&
-              tokenPrices["EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"] && (
-                <div className="text-xs text-gray-500 mt-1">
-                  Price: $
-                  {tokenPrices["EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"]}
+
+              {apiResponse && (
+                <div className="flex items-center justify-between p-4 bg-white rounded-xl shadow-lg border border-white">
+                  <div className="flex items-center space-x-4">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-pink-300 to-yellow-300 rounded-full blur-sm animate-pulse" />
+                      <img
+                        src={apiResponse.LogoURI}
+                        alt="Token Logo"
+                        className="relative w-10 h-10 rounded-full border-2 border-white shadow-lg"
+                      />
+                    </div>
+                    <div>
+                      <p className="text-gray-800 font-bold">
+                        {apiResponse.symbol}
+                      </p>
+                      <p className="text-gray-500 text-sm">
+                        {apiResponse.name}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
+              {/* Swap Button */}
+              <button
+                onClick={handleSwap}
+                className="w-full py-4 rounded-xl font-bold transition-all duration-300 transform bg-gradient-to-r from-cyan-400 via-pink-300 to-yellow-300 text-white hover:opacity-90 active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+              >
+                Swap
+              </button>
+            </>
+          )}
+
+          {/* Footer */}
+          <div className="pt-2">
+            <p className="text-center text-sm font-medium bg-gradient-to-r from-cyan-400 via-pink-400 to-yellow-400 bg-clip-text text-transparent">
+              Powered by winks.fun
+            </p>
           </div>
-          {errorMessage && (
-            <div className="flex items-center text-sm justify-center gap-2 p-3 mt-2 text-red-600 bg-red-100 rounded-lg">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-5 h-5"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              {errorMessage}
-            </div>
-          )}
-
-          {successMessage && signatureLink && (
-            <div className="flex items-center justify-center text-sm gap-2 p-3 mt-2 text-green-600 bg-green-100 rounded-lg">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-5 h-5"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span className="text-sm">{successMessage}</span>
-              <a
-                href={signatureLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ml-1 text-blue-600 hover:underline"
-              >
-                View on Solscan
-              </a>
-            </div>
-          )}
-
-          <button
-            onClick={ handleSwap }
-            className="w-full px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:bg-indigo-300 disabled:cursor-not-allowed"
-            // disabled={isSwapping || isSigning || !fromAmount}
-          >
-swap          </button>
-        </div>
-        <div className="">
-          <p className=" text-indigo-600 text-sm text-center">Powered by winks.fun</p>
         </div>
       </div>
     </div>
