@@ -151,7 +151,7 @@ export default function Home() {
           <button
             className={`w-full py-3 rounded-lg font-bold transition-all duration-300 transform ${
               !address || !isValidAddress
-                ? "bg-gray-300 cursor-not-allowed"
+                ? "bg-gray-300 text-gray-600 cursor-not-allowed"
                 : "bg-gradient-to-r from-cyan-400 via-pink-300 to-yellow-300 hover:opacity-90 active:scale-95 shadow-lg hover:shadow-xl text-white hover:text-gray-800"
             }`}
             onClick={generateLink}
