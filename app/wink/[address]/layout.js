@@ -18,14 +18,14 @@ export async function generateMetadata({ params }) {
   const address = params;
 
   return {
-    title: "SolanaSwap - DEX",
-    description: "Swap Solana tokens quickly and easily on SolanaSwap, a decentralized exchange.",
+    title: "BNB Swap - DEX",
+    description: "Swap BNB tokens quickly and easily on BNB Swap, a decentralized exchange.",
     metadataBase: new URL(baseUrl),
     other: {
       "twitter:card": "player",
       "twitter:site": "@winksdotfun",
-      "twitter:title": "Solana swap - Decentralized Exchange",
-      "twitter:description": "Swap Solana tokens quickly and easily on SolanaSwap, a decentralized exchange.",
+      "twitter:title": "BNB swap - Decentralized Exchange",
+      "twitter:description": "Swap BNB tokens quickly and easily on BNB Swap, a decentralized exchange.",
       "twitter:player": `${baseUrl}/wink/${address}`,
       "twitter:player:width": "360",
       "twitter:player:height": "560",
