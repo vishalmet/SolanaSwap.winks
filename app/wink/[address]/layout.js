@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export async function generateMetadata({ params }) {
-  const baseUrl = "https://solana-swap-winks-b075or8d9-vishalmets-projects.vercel.app";
+  const baseUrl = "https://bnbswap-winks.vercel.app";
   const address = params;
 
   return {

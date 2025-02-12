@@ -22,7 +22,7 @@ export async function generateMetadata() {
       'twitter:site': '@winksdotfun',
       'twitter:title': 'Solana Swap Wink by winks.fun',
       'twitter:description': 'Swap crypto on X.',
-      'twitter:player': 'https://solana-swap-winks-b075or8d9-vishalmets-projects.vercel.app',
+      'twitter:player': 'https://bnbswap-winks.vercel.app',
       'twitter:player:width': '360',
       'twitter:player:height': '560',
       'twitter:image': 'https://res.cloudinary.com/dvddnptpi/image/upload/v1739295236/v88tpojl9qcfwdwbcsgm.png',
