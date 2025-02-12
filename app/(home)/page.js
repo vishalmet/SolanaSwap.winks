@@ -119,6 +119,8 @@ export default function Home() {
             )}
           </div>
 
+
+
           {/* Token info card */}
           {apiResponse && (
             <div className="transform transition-all duration-300 hover:scale-102">
