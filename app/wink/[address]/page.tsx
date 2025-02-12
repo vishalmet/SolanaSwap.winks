@@ -244,41 +244,43 @@ const SolanaSwapUI: React.FC = () => {
           <div className="flex justify-end mb-2">
             <ConnectButton />
           </div>
-
-          <div className="">
-            <p>Buy DOGE tokens with BNB in one-click</p>
-          </div>
-          <div className="">
-            <div className="transform transition-all duration-300 hover:scale-102">
-              <div className="p-2 px-4 rounded-xl bg-gradient-to-r from-cyan-50 via-pink-50 to-yellow-50 shadow-lg border border-white/50">
-                <div className="flex items-center justify-between space-x-4">
-                  <div className=" flex items-center space-x-4">
-                    <div className="relative">
-                      <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-pink-300 to-yellow-300 rounded-full blur-sm animate-pulse" />
-                      <img
-                        src="https://res.cloudinary.com/dvddnptpi/image/upload/v1739379832/frfgvnra42g6x7ovmana.webp"
-                        alt="Token Logo"
-                        className="relative w-10 h-10 rounded-full border-2 border-white shadow-lg"
-                      />
+          {!showAdditionalUI && (
+            <div className="">
+              <p>Buy DOGE tokens with BNB in one-click</p>
+            </div>
+          )}
+          {!showAdditionalUI && (
+            <div className="">
+              <div className="transform transition-all duration-300 hover:scale-102">
+                <div className="p-2 px-4 rounded-xl bg-gradient-to-r from-cyan-50 via-pink-50 to-yellow-50 shadow-lg border border-white/50">
+                  <div className="flex items-center justify-between space-x-4">
+                    <div className=" flex items-center space-x-4">
+                      <div className="relative">
+                        <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-pink-300 to-yellow-300 rounded-full blur-sm animate-pulse" />
+                        <img
+                          src="https://res.cloudinary.com/dvddnptpi/image/upload/v1739379832/frfgvnra42g6x7ovmana.webp"
+                          alt="Token Logo"
+                          className="relative w-10 h-10 rounded-full border-2 border-white shadow-lg"
+                        />
+                      </div>
+                      <div>
+                        <p className="text-gray-800 font-bold">BNB </p>
+                        <p className="text-gray-500 text-sm">BNB </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-gray-800 font-bold">BNB </p>
-                      <p className="text-gray-500 text-sm">BNB </p>
+                    <div className="">
+                      <button
+                        className="w-full flex items-center p-3 px-4 rounded-xl font-bold transition-all duration-300 transform bg-gradient-to-r from-cyan-400 via-pink-300 to-yellow-300 text-white hover:opacity-90 active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+                        onClick={handleContinue}
+                      >
+                        Continue <ArrowRight />
+                      </button>
                     </div>
-                  </div>
-                  <div className="">
-                    <button
-                      className="w-full flex items-center p-3 px-4 rounded-xl font-bold transition-all duration-300 transform bg-gradient-to-r from-cyan-400 via-pink-300 to-yellow-300 text-white hover:opacity-90 active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
-                      onClick={handleContinue}
-                    >
-                      Continue <ArrowRight />
-                    </button>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-
+          )}
           {showAdditionalUI && (
             <>
               {/* Error Message */}
@@ -299,26 +301,26 @@ const SolanaSwapUI: React.FC = () => {
                   {errorMessage}
                 </div>
               )}
-
-              <div className="p-2 px-4 rounded-xl bg-gradient-to-r from-cyan-50 via-pink-50 to-yellow-50 shadow-lg border border-white/50">
-                <div className="flex items-center justify-between space-x-4">
-                  <div className=" flex items-center space-x-4">
-                    <div className="relative">
-                      <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-pink-300 to-yellow-300 rounded-full blur-sm animate-pulse" />
-                      <img
-                        src="https://res.cloudinary.com/dvddnptpi/image/upload/v1739379832/frfgvnra42g6x7ovmana.webp"
-                        alt="Token Logo"
-                        className="relative w-10 h-10 rounded-full border-2 border-white shadow-lg"
-                      />
-                    </div>
-                    <div>
-                      <p className="text-gray-800 font-bold">BNB </p>
-                      <p className="text-gray-500 text-sm">BNB </p>
+              {showAdditionalUI && (
+                <div className="p-2 px-4 rounded-xl bg-gradient-to-r from-cyan-50 via-pink-50 to-yellow-50 shadow-lg border border-white/50">
+                  <div className="flex items-center justify-between space-x-4">
+                    <div className=" flex items-center space-x-4">
+                      <div className="relative">
+                        <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-pink-300 to-yellow-300 rounded-full blur-sm animate-pulse" />
+                        <img
+                          src="https://res.cloudinary.com/dvddnptpi/image/upload/v1739379832/frfgvnra42g6x7ovmana.webp"
+                          alt="Token Logo"
+                          className="relative w-10 h-10 rounded-full border-2 border-white shadow-lg"
+                        />
+                      </div>
+                      <div>
+                        <p className="text-gray-800 font-bold">BNB </p>
+                        <p className="text-gray-500 text-sm">BNB </p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-
+              )}
               {apiResponse && (
                 <div className="flex items-center justify-between p-4 bg-white rounded-xl shadow-lg border border-white">
                   <div className="flex items-center space-x-4">
