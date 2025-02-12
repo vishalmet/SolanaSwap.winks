@@ -7,6 +7,8 @@ import {
   Copy,
   ExternalLink,
   ArrowRight,
+  Share2,
+  CheckCircle,
 } from "lucide-react";
 
 import { ConnectButton } from "@rainbow-me/rainbowkit";
@@ -78,6 +80,8 @@ const SolanaSwapUI: React.FC = () => {
   const [points, setPoints] = useState<number | null>(null);
   const [quoteData, setQuoteData] = useState<any | null>(null);
   const [weiAmount, setWeiAmount] = useState<string>("");
+  const [success, setSuccess] = useState<boolean | null>(false);
+  const [txnHash, setTxnHash] = useState<string>(""); 
 
 
   const handleBnbAmountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -199,6 +203,8 @@ const SolanaSwapUI: React.FC = () => {
 
     const receipt = await waitForTransaction(res);
     console.log("Transaction receipt: ", receipt);
+    setSuccess(true);
+    setTxnHash(receipt.transactionHash);
   };
 
   async function buildTxForSwap(swapParams: any) {
@@ -286,6 +292,10 @@ useEffect(() => {
     setShowAdditionalUI(true);
   };
 
+  const handleShare = () => {
+    const tweetText = `Just swapped tokens on winks.fun! Join me and earn points! 🚀\n\nhttps://bnbswap-winks.vercel.app/wink/${destAddress}`;
+    window.open(`https://twitter.com/intent/post?text=${encodeURIComponent(tweetText)}`, '_blank', 'width=600,height=400');
+  };
  
 
   return (
@@ -474,6 +484,65 @@ useEffect(() => {
               </button>
             </>
           )}
+
+{success && (
+            <div className="absolute inset-0 bg-gradient-to-br from-cyan-100/90 via-pink-100/90 to-yellow-100/90 backdrop-blur-lg flex items-center justify-center z-50 font-mono">
+            <div className="relative w-full max-w-md mx-4">
+              {/* Background glow effects */}
+              <div className="absolute top-0 left-1/4 w-32 h-32 bg-cyan-300/30 rounded-full blur-xl" />
+              <div className="absolute bottom-0 right-1/4 w-32 h-32 bg-pink-300/30 rounded-full blur-xl" />
+              
+              {/* Main content card */}
+              <div className="relative bg-white/70 backdrop-blur-md rounded-2xl p-8 shadow-2xl border border-white">
+                <div className="flex flex-col items-center justify-center space-y-6">
+                  {/* Success animation */}
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-green-400/20 rounded-full blur-md animate-pulse" />
+                    <div className="relative animate-bounce">
+                      <CheckCircle className="w-16 h-16 text-green-500" />
+                    </div>
+                  </div>
+        
+                  {/* Success message */}
+                  <div className="space-y-3 text-center">
+                    <h2 className="text-2xl font-bold bg-gradient-to-r from-cyan-600 via-pink-600 to-yellow-600 bg-clip-text text-transparent">
+                      Transaction Successful!
+                    </h2>
+                    <div className="bg-green-50 rounded-xl p-4 border border-green-100">
+                      <p className="text-green-700 font-medium">
+                        You have been credited with 10 points! 🎉
+                      </p>
+                    </div>
+                  </div>
+        
+                  {/* Transaction link */}
+                  <a
+                    href={`https://bscscan.com/tx/${txnHash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors duration-200"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    <span>View Transaction</span>
+                  </a>
+        
+                  {/* Share button */}
+                  <button
+                    onClick={handleShare}
+                    className="w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-bold
+                             bg-gradient-to-r from-cyan-500 via-pink-500 to-yellow-500 text-white
+                             hover:opacity-90 active:scale-[0.98] transition-all duration-200
+                             shadow-lg hover:shadow-xl"
+                  >
+                    <Share2 className="w-5 h-5" />
+                    Refer your friends
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          )}
+
 
           {/* Footer */}
           <div className="pt-2">
