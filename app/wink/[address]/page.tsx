@@ -110,7 +110,7 @@ const SolanaSwapUI: React.FC = () => {
   const swapParams = {
     src: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", // Token address of 1INCH
     dst: destAddress, // Token address of DAI
-    amount: "1000000",
+    amount: weiAmount,
     from: address,
     slippage: 1, // Maximum acceptable slippage percentage for the swap (e.g., 1 for 1%)
     disableEstimate: false, // Set to true to disable estimation of swap details
@@ -183,7 +183,9 @@ const SolanaSwapUI: React.FC = () => {
     });
 
     const { waitForTransactionReceipt } = await import("viem/actions");
-    const receipt = await waitForTransactionReceipt(client, { hash });
+    const receipt = await waitForTransactionReceipt(client, { 
+      hash: hash as `0x${string}` 
+    });
     return receipt;
   }
 
@@ -218,14 +220,26 @@ const SolanaSwapUI: React.FC = () => {
   const dstAddress = destAddress;
   const fetchData = async () => {
     setIsLoading(true);
+    const weiAmountNumber = Number(weiAmount);
+    if(weiAmountNumber <= 0){  
+        return;
+    }
     try {
+  
+
+        console.log(weiAmount);
         const response = await axios.post('/api/quote-proxy', {
             src: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
             dst: destAddress,
             amount: weiAmount
         });
         
-        setQuoteData(response.data);
+        if(response.status === 200) {
+            // Convert wei to ETH before setting the quote data
+            const ethAmount = ethers.utils.formatEther(response.data.dstAmount);
+            console.log("ethAmount", ethAmount);
+            setQuoteData(ethAmount);
+        }
         console.log(response.data);
     } catch (error) {
         console.error(error);
@@ -441,6 +455,12 @@ useEffect(() => {
                       <p className="text-gray-500 text-sm">
                         {apiResponse.name}
                       </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-800 font-bold">
+                        {quoteData ? quoteData : "0.00"}
+                      </p>
+                   
                     </div>
                   </div>
                 </div>

@@ -16,6 +16,13 @@ export async function POST(request: Request) {
 
         const apiKey = process.env.NEXT_PUBLIC_1INCH_API_KEY;
 
+
+        const amountNumber = Number(amount);
+        console.log("amountNumber", amountNumber);
+        if(amountNumber <= 0){
+            return NextResponse.json({ error: 'Amount must be greater than 0' }, { status: 201 });
+        }
+
         const config = {
             headers: {
                 'Authorization': `Bearer ${apiKey}`
@@ -35,13 +42,13 @@ export async function POST(request: Request) {
 
 
 
-        const response = await axios.get(`https://api.1inch.dev/swap/v6.0/56/quote?src=0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee&dst=0xd5eaaac47bd1993d661bc087e15dfb079a7f3c19&amount=1000000`, {
+        const response = await axios.get(url, {
             headers: {
               'Authorization': 'Bearer uzF2lXeO9pYtpjthDs0ltrkVwDcup6bd'
             }
           });
 
-        return NextResponse.json(response.data);
+        return NextResponse.json(response.data, { status: 200 });
     } catch (error) {
         console.error("Proxy Error:", error);
         return NextResponse.json(
