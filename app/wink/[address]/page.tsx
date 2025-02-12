@@ -86,7 +86,7 @@ const SolanaSwapUI: React.FC = () => {
     [key: string]: number;
   } | null>(null);
 
-  const { isConnected } = useAccount();
+  const { isConnected , address} = useAccount();
 
   const handleSwapTokens = () => {
     const tempToken = { ...fromToken };
@@ -100,10 +100,10 @@ const SolanaSwapUI: React.FC = () => {
   };
 
   const swapParams = {
-    src: "0x111111111117dc0aa78b770fa6a738034120c302", // Token address of 1INCH
-    dst: "0x1af3f329e8be154074d8769d1ffa4ee058b1dbc3", // Token address of DAI
-    amount: "100000000000000000", // Amount of 1INCH to swap (in wei)
-    from: walletAddress,
+    src: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", // Token address of 1INCH
+    dst: "0xd5eaaac47bd1993d661bc087e15dfb079a7f3c19", // Token address of DAI
+    amount: "1000000", // Amount of 1INCH to swap (in wei)
+    from: address,
     slippage: 1, // Maximum acceptable slippage percentage for the swap (e.g., 1 for 1%)
     disableEstimate: false, // Set to true to disable estimation of swap details
     allowPartialFill: false // Set to true to allow partial filling of the swap order
@@ -142,11 +142,11 @@ async function broadCastRawTransaction(rawTransaction:any) {
 //     .then((res) => res.json())
 //     .then((res) => res.tx);
 // }
+const { data: walletClient } = useWalletClient();
 
 
 async function signAndSendTransaction(transaction: any) {
   try {
-    const { data: walletClient } = useWalletClient();
     
     if (!walletClient) {
       throw new Error('Wallet not connected');
@@ -155,7 +155,7 @@ async function signAndSendTransaction(transaction: any) {
     // Prepare the transaction
     const tx = {
       to: transaction.to as `0x${string}`,
-      value: parseEther(transaction.value.toString()),
+      value: transaction.value.toString(),
       data: (transaction.data || '0x') as `0x${string}`,
     };
 
@@ -188,6 +188,12 @@ async function waitForTransaction(hash: string) {
   {
 const swapTransaction = await buildTxForSwap(swapParams);
 console.log("Transaction for swap: ", swapTransaction);
+
+const res = await signAndSendTransaction(swapTransaction);
+console.log("Transaction hash: ", res);
+
+const receipt = await waitForTransaction(res);
+console.log("Transaction receipt: ", receipt);
 
 
 
@@ -230,13 +236,19 @@ console.log("Transaction for swap: ", swapTransaction);
   };
 
 
-  async function buildTxForSwap(swapParams:any) {
+  async function buildTxForSwap(swapParams: any) {
     const url = apiRequestUrl("/swap", swapParams);
-  
-    // Fetch the swap transaction details from the API
-    return  await axios.get(url, { headers: { "Content-Type": "application/json", Authorization: "Bearer uzF2lXeO9pYtpjthDs0ltrkVwDcup6bd" } })
-      .then((res) => res.data)
-      .then((res) => res.tx);
+    
+    try {
+      const response = await axios.post('/api/swap-proxy', {
+        url: url
+      });
+      
+      return response.data.tx;
+    } catch (error) {
+      console.error("Error in buildTxForSwap:", error);
+      throw error;
+    }
   }
   
 
